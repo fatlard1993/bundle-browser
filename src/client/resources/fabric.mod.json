@@ -5,12 +5,12 @@
   "name": "Bundle Browser",
   "description": "A grid UI for viewing and extracting items from bundles - no more FILO frustration!",
   "authors": [
-    "chase-cove"
+    "fatlard1993"
   ],
   "contact": {
-    "homepage": "https://github.com/chase-cove/bundle-browser",
-    "sources": "https://github.com/chase-cove/bundle-browser",
-    "issues": "https://github.com/chase-cove/bundle-browser/issues"
+    "homepage": "https://github.com/fatlard1993/bundle-browser",
+    "sources": "https://github.com/fatlard1993/bundle-browser",
+    "issues": "https://github.com/fatlard1993/bundle-browser/issues"
   },
   "license": "MIT",
   "icon": "assets/bundlebrowser/icon.png",
