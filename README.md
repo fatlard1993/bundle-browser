@@ -2,6 +2,8 @@
 
 A client-side Fabric mod that provides a grid UI for viewing and extracting items from bundles.
 
+![Bundle Browser Screenshot](screenshot.png)
+
 ## The Problem
 
 Vanilla bundles use a FILO (First In, Last Out) system - you can only extract the most recently added item. Want to grab something from the middle? You have to pull everything out one by one.
