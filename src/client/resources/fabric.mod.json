@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "bundlebrowser",
+  "version": "${version}",
+  "name": "Bundle Browser",
+  "description": "A grid UI for viewing and extracting items from bundles - no more FILO frustration!",
+  "authors": [
+    "chase-cove"
+  ],
+  "contact": {
+    "homepage": "https://github.com/chase-cove/bundle-browser",
+    "sources": "https://github.com/chase-cove/bundle-browser",
+    "issues": "https://github.com/chase-cove/bundle-browser/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/bundlebrowser/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.bundlebrowser.BundleBrowserClient"
+    ]
+  },
+  "mixins": [
+    "bundlebrowser.client.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
