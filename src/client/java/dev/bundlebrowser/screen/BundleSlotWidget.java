@@ -1,6 +1,7 @@
 package dev.bundlebrowser.screen;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.widget.ClickableWidget;
@@ -50,23 +51,14 @@ public class BundleSlotWidget extends ClickableWidget {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (this.active && this.visible && isMouseOver(mouseX, mouseY)) {
-            if (button == 0 && onClick != null && !itemStack.isEmpty()) {
-                // Play click sound
-                MinecraftClient.getInstance().getSoundManager().play(
-                        PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F)
-                );
-                onClick.accept(this);
-                return true;
-            }
+    public void onClick(Click click, boolean doubled) {
+        if (click.button() == 0 && onClick != null && !itemStack.isEmpty()) {
+            // Play click sound
+            MinecraftClient.getInstance().getSoundManager().play(
+                    PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F)
+            );
+            this.onClick.accept(this);
         }
-        return false;
-    }
-
-    @Override
-    public void onClick(double mouseX, double mouseY) {
-        // Handled in mouseClicked
     }
 
     /**

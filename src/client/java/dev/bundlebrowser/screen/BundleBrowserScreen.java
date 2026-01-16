@@ -10,6 +10,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;
@@ -130,8 +131,8 @@ public class BundleBrowserScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Darken background
-        renderBackground(context, mouseX, mouseY, delta);
+        // Draw semi-transparent overlay (don't call renderBackground - it causes double blur)
+        context.fill(0, 0, width, height, 0xC0101010);
 
         // Draw container background (chest-like appearance)
         drawContainerBackground(context);
@@ -402,12 +403,12 @@ public class BundleBrowserScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyInput input) {
         // Allow ESC or inventory key to close
-        if (keyCode == 256 || (client != null && client.options.inventoryKey.matchesKey(keyCode, scanCode))) {
+        if (input.key() == 256 || (client != null && client.options.inventoryKey.matchesKey(input))) {
             close();
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(input);
     }
 }
