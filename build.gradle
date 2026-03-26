@@ -1,6 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.14-SNAPSHOT'
-    id 'maven-publish'
+    id 'fabric-loom' version '1.15.3'
 }
 
 version = project.mod_version
@@ -11,7 +10,6 @@ base {
 }
 
 repositories {
-    // Add repositories for dependencies here
 }
 
 loom {
@@ -32,14 +30,6 @@ dependencies {
 
     // Fabric API
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-}
-
-processResources {
-    inputs.property "version", project.version
-
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version
-    }
 }
 
 processClientResources {
@@ -64,16 +54,5 @@ java {
 jar {
     from("LICENSE") {
         rename { "${it}_${project.base.archivesName.get()}" }
-    }
-}
-
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            artifactId = project.archives_base_name
-            from components.java
-        }
-    }
-    repositories {
     }
 }
