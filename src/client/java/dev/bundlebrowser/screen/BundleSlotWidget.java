@@ -1,21 +1,20 @@
 package dev.bundlebrowser.screen;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.item.ItemStack;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-
 import java.util.function.Consumer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * A clickable widget that displays a single item from a bundle.
  */
-public class BundleSlotWidget extends ClickableWidget {
+public class BundleSlotWidget extends AbstractWidget {
     public static final int SLOT_SIZE = 18;
 
     private final ItemStack itemStack;
@@ -23,7 +22,7 @@ public class BundleSlotWidget extends ClickableWidget {
     private final Consumer<BundleSlotWidget> onClick;
 
     public BundleSlotWidget(int x, int y, ItemStack itemStack, int index, Consumer<BundleSlotWidget> onClick) {
-        super(x, y, SLOT_SIZE, SLOT_SIZE, Text.empty());
+        super(x, y, SLOT_SIZE, SLOT_SIZE, Component.empty());
         this.itemStack = itemStack;
         this.index = index;
         this.onClick = onClick;
@@ -31,8 +30,8 @@ public class BundleSlotWidget extends ClickableWidget {
     }
 
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-        MinecraftClient client = MinecraftClient.getInstance();
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        Minecraft client = Minecraft.getInstance();
 
         // Draw slot background (vanilla style)
         context.fill(getX(), getY(), getX() + width, getY() + height, 0xFF8B8B8B);
@@ -40,8 +39,8 @@ public class BundleSlotWidget extends ClickableWidget {
 
         // Draw the item
         if (!itemStack.isEmpty()) {
-            context.drawItem(itemStack, getX() + 1, getY() + 1);
-            context.drawStackOverlay(client.textRenderer, itemStack, getX() + 1, getY() + 1);
+            context.item(itemStack, getX() + 1, getY() + 1);
+            context.itemDecorations(client.font, itemStack, getX() + 1, getY() + 1);
         }
 
         // Draw hover highlight
@@ -51,11 +50,11 @@ public class BundleSlotWidget extends ClickableWidget {
     }
 
     @Override
-    public void onClick(Click click, boolean doubled) {
+    public void onClick(MouseButtonEvent click, boolean doubled) {
         if (click.button() == 0 && onClick != null && !itemStack.isEmpty()) {
             // Play click sound
-            MinecraftClient.getInstance().getSoundManager().play(
-                    PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F)
+            Minecraft.getInstance().getSoundManager().play(
+                    SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F)
             );
             this.onClick.accept(this);
         }
@@ -64,9 +63,9 @@ public class BundleSlotWidget extends ClickableWidget {
     /**
      * Render the tooltip for this slot.
      */
-    public void renderTooltip(DrawContext context, int mouseX, int mouseY) {
+    public void renderTooltip(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         if (isHovered() && !itemStack.isEmpty()) {
-            context.drawItemTooltip(MinecraftClient.getInstance().textRenderer, itemStack, mouseX, mouseY);
+            context.setTooltipForNextFrame(Minecraft.getInstance().font, itemStack, mouseX, mouseY);
         }
     }
 
@@ -79,9 +78,9 @@ public class BundleSlotWidget extends ClickableWidget {
     }
 
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
+    protected void updateWidgetNarration(NarrationElementOutput builder) {
         if (!itemStack.isEmpty()) {
-            builder.put(net.minecraft.client.gui.screen.narration.NarrationPart.TITLE, itemStack.getName());
+            builder.add(net.minecraft.client.gui.narration.NarratedElementType.TITLE, itemStack.getHoverName());
         }
     }
 }

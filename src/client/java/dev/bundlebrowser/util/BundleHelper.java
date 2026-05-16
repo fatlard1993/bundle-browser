@@ -1,12 +1,11 @@
 package dev.bundlebrowser.util;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.BundleContentsComponent;
-import net.minecraft.item.BundleItem;
-import net.minecraft.item.ItemStack;
-
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.BundleItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.BundleContents;
 
 /**
  * Utility class for working with bundle items and their contents.
@@ -25,7 +24,7 @@ public class BundleHelper {
      */
     public static boolean isEmpty(ItemStack bundle) {
         if (!isBundle(bundle)) return true;
-        BundleContentsComponent contents = bundle.get(DataComponentTypes.BUNDLE_CONTENTS);
+        BundleContents contents = bundle.get(DataComponents.BUNDLE_CONTENTS);
         return contents == null || contents.isEmpty();
     }
 
@@ -43,12 +42,10 @@ public class BundleHelper {
         List<ItemStack> items = new ArrayList<>();
         if (!isBundle(bundle)) return items;
 
-        BundleContentsComponent contents = bundle.get(DataComponentTypes.BUNDLE_CONTENTS);
+        BundleContents contents = bundle.get(DataComponents.BUNDLE_CONTENTS);
         if (contents == null) return items;
 
-        for (ItemStack stack : contents.iterate()) {
-            items.add(stack.copy());
-        }
+        contents.itemCopyStream().forEach(items::add);
 
         return items;
     }
