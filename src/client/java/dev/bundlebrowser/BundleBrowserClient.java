@@ -4,12 +4,7 @@ import net.fabricmc.api.ClientModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Bundle Browser - A client-side mod that lets you open bundles like chests.
- *
- * Simply right-click a bundle in your inventory to open it in a grid view.
- * Click any item to extract it, or use "Empty All" to dump everything.
- */
+/** Client-side only: right-click a bundle to open it in a grid view. */
 public class BundleBrowserClient implements ClientModInitializer {
     public static final String MOD_ID = "bundlebrowser";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);

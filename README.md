@@ -21,9 +21,7 @@ Bundle Browser lets you **right-click any bundle in your inventory** to open a c
 
 ## Installation
 
-1. Install [Fabric Loader](https://fabricmc.net/use/installer/) for Minecraft 1.21.11
-2. Install [Fabric API](https://modrinth.com/mod/fabric-api)
-3. Download Bundle Browser and place it in your `mods` folder
+Install alongside its declared dependencies (see `fabric.mod.json`), then place the mod jar in your `mods` folder.
 
 ## Usage
 
@@ -34,9 +32,7 @@ Bundle Browser lets you **right-click any bundle in your inventory** to open a c
 
 ## Requirements
 
-- Minecraft 1.21.11
-- Fabric Loader 0.16.0+
-- Fabric API
+Targets the Minecraft, Fabric Loader, and Java versions declared in this mod's `gradle.properties`; check there for the exact currently-supported version.
 
 ## Building from Source
 

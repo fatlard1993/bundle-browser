@@ -11,9 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 
-/**
- * A clickable widget that displays a single item from a bundle.
- */
+/** One clickable item cell in the bundle grid. */
 public class BundleSlotWidget extends AbstractWidget {
     public static final int SLOT_SIZE = 18;
 
@@ -26,24 +24,21 @@ public class BundleSlotWidget extends AbstractWidget {
         this.itemStack = itemStack;
         this.index = index;
         this.onClick = onClick;
-        this.active = true; // Ensure widget is active
+        this.active = true;
     }
 
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         Minecraft client = Minecraft.getInstance();
 
-        // Draw slot background (vanilla style)
         context.fill(getX(), getY(), getX() + width, getY() + height, 0xFF8B8B8B);
         context.fill(getX() + 1, getY() + 1, getX() + width - 1, getY() + height - 1, 0xFF373737);
 
-        // Draw the item
         if (!itemStack.isEmpty()) {
             context.item(itemStack, getX() + 1, getY() + 1);
             context.itemDecorations(client.font, itemStack, getX() + 1, getY() + 1);
         }
 
-        // Draw hover highlight
         if (isHovered()) {
             context.fill(getX() + 1, getY() + 1, getX() + width - 1, getY() + height - 1, 0x80FFFFFF);
         }
@@ -52,7 +47,6 @@ public class BundleSlotWidget extends AbstractWidget {
     @Override
     public void onClick(MouseButtonEvent click, boolean doubled) {
         if (click.button() == 0 && onClick != null && !itemStack.isEmpty()) {
-            // Play click sound
             Minecraft.getInstance().getSoundManager().play(
                     SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F)
             );
@@ -60,9 +54,6 @@ public class BundleSlotWidget extends AbstractWidget {
         }
     }
 
-    /**
-     * Render the tooltip for this slot.
-     */
     public void renderTooltip(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         if (isHovered() && !itemStack.isEmpty()) {
             context.setTooltipForNextFrame(Minecraft.getInstance().font, itemStack, mouseX, mouseY);

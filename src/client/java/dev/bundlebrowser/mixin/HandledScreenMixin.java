@@ -24,28 +24,26 @@ public abstract class HandledScreenMixin {
             at = @At("HEAD"),
             cancellable = true)
     private void onSlotClick(Slot slot, int slotId, int button, ContainerInput actionType, CallbackInfo ci) {
-        // Check for right-click (button 1) with PICKUP action on a valid bundle slot
+        // button 1 = right-click
         if (button == 1 && actionType == ContainerInput.PICKUP && slot != null && slot.hasItem() && slot.index >= 0) {
-            // Skip creative inventory — its synthetic screen handler doesn't support extraction
+            // Skip creative inventory: its synthetic screen handler doesn't support extraction
             if (((Object) this) instanceof CreativeModeInventoryScreen) return;
 
             ItemStack stack = slot.getItem();
 
-            // Only intercept if it's a bundle and cursor is empty (normal right-click to extract)
             Minecraft client = Minecraft.getInstance();
             if (client.player != null && BundleHelper.isBundle(stack)) {
                 ItemStack cursorStack = client.player.containerMenu.getCarried();
 
                 // Only open browser if cursor is empty (would normally extract) and bundle has items
+                // Empty cursor is the gesture that would vanilla-extract; that's the one we take over
                 if (cursorStack.isEmpty() && !BundleHelper.isEmpty(stack)) {
-                    // Cancel the vanilla extraction behavior
                     ci.cancel();
 
                     BundleBrowserClient.LOGGER.debug("Opening bundle browser for slot {}", slot.index);
 
-                    // Open our bundle browser screen
                     AbstractContainerScreen<?> currentScreen = (AbstractContainerScreen<?>) (Object) this;
-                    client.setScreen(new BundleBrowserScreen(stack, slot.index, currentScreen));
+                    client.setScreenAndShow(new BundleBrowserScreen(stack, slot.index, currentScreen));
                 }
             }
         }

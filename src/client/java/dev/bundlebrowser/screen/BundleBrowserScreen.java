@@ -1,8 +1,8 @@
 package dev.bundlebrowser.screen;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import dev.bundlebrowser.BundleBrowserClient;
 import dev.bundlebrowser.util.BundleHelper;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,10 +19,7 @@ import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-/**
- * Bundle Browser screen that looks and feels like opening a chest.
- * Uses vanilla container styling for a native Minecraft feel.
- */
+/** Grid view of a bundle's contents, styled like a chest screen. */
 public class BundleBrowserScreen extends Screen {
     private static final int SLOT_SIZE = BundleSlotWidget.SLOT_SIZE;
     private static final int BORDER_LEFT = 7;
@@ -37,7 +34,6 @@ public class BundleBrowserScreen extends Screen {
     private List<ItemStack> contents;
     private List<BundleSlotWidget> slotWidgets;
 
-    // Container positioning
     private int containerX;
     private int containerY;
     private int containerWidth;
@@ -45,7 +41,6 @@ public class BundleBrowserScreen extends Screen {
     private int columns;
     private int rows;
 
-    // Hovered slot for tooltip rendering
     private BundleSlotWidget hoveredSlot;
 
     public BundleBrowserScreen(ItemStack bundleStack, int bundleSlotId, AbstractContainerScreen<?> parentScreen) {
@@ -64,7 +59,6 @@ public class BundleBrowserScreen extends Screen {
         slotWidgets.clear();
         hoveredSlot = null;
 
-        // Refresh contents from current bundle state
         ItemStack currentBundle = screenHandler.getSlot(bundleSlotId).getItem();
         if (!BundleHelper.isBundle(currentBundle) || BundleHelper.isEmpty(currentBundle)) {
             onClose();
@@ -94,15 +88,12 @@ public class BundleBrowserScreen extends Screen {
             rows = 6;
         }
 
-        // Container dimensions (like chest texture)
         containerWidth = BORDER_LEFT * 2 + columns * SLOT_SIZE + 4;
         containerHeight = BORDER_TOP + rows * SLOT_SIZE + 14 + 28; // Extra space for button
 
-        // Center the container
         containerX = (width - containerWidth) / 2;
         containerY = (height - containerHeight) / 2;
 
-        // Create slot widgets
         int slotStartX = containerX + BORDER_LEFT + 1;
         int slotStartY = containerY + BORDER_TOP + 1;
 
@@ -117,7 +108,6 @@ public class BundleBrowserScreen extends Screen {
             addRenderableWidget(slot);
         }
 
-        // Add "Empty All" button at the bottom
         int buttonWidth = 60;
         int buttonY = containerY + BORDER_TOP + rows * SLOT_SIZE + 10;
         addRenderableWidget(Button.builder(
@@ -133,13 +123,11 @@ public class BundleBrowserScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        // Draw semi-transparent overlay (don't call renderBackground - it causes double blur)
+        // Don't call renderBackground here: it causes double blur
         context.fill(0, 0, width, height, 0xC0101010);
 
-        // Draw container background (chest-like appearance)
         drawContainerBackground(context);
 
-        // Draw title
         context.text(
                 font,
                 title,
@@ -149,7 +137,6 @@ public class BundleBrowserScreen extends Screen {
                 false
         );
 
-        // Track hovered slot for tooltip
         hoveredSlot = null;
         for (BundleSlotWidget slot : slotWidgets) {
             if (slot.isHovered()) {
@@ -158,7 +145,6 @@ public class BundleBrowserScreen extends Screen {
             }
         }
 
-        // Render all children (slots, buttons)
         super.extractRenderState(context, mouseX, mouseY, delta);
 
         // Render tooltip last (on top of everything)
@@ -190,11 +176,7 @@ public class BundleBrowserScreen extends Screen {
         context.fill(slotsX + 1, slotsY + 1, slotsX + slotsWidth - 1, slotsY + slotsHeight - 1, 0xFF8B8B8B);
     }
 
-    /**
-     * Find an empty player inventory slot in the screen handler.
-     * Works across all container types by checking the slot's backing inventory.
-     * Returns the screen handler slot index, or -1 if no empty slot found.
-     */
+    /** Matches on the slot's backing inventory, so it works across all container types. */
     private int findEmptyPlayerSlot(LocalPlayer player) {
         for (int i = 0; i < screenHandler.slots.size(); i++) {
             Slot slot = screenHandler.getSlot(i);
@@ -216,11 +198,10 @@ public class BundleBrowserScreen extends Screen {
         LocalPlayer player = client.player;
         if (player == null || client.gameMode == null) return;
 
-        // Extract targetIndex + 1 items to get the one at targetIndex
         final int extractCount = targetIndex + 1;
 
         client.execute(() -> {
-            client.setScreen(parentScreen);
+            client.setScreenAndShow(parentScreen);
             extractItemsAndKeepLast(client, player, extractCount, new ArrayList<>());
         });
     }
@@ -228,7 +209,6 @@ public class BundleBrowserScreen extends Screen {
     private void extractItemsAndKeepLast(Minecraft client, LocalPlayer player,
             int remaining, List<Integer> extractedSlots) {
         if (remaining <= 0) {
-            // Put back all but the last extracted item
             if (extractedSlots.size() > 1) {
                 putBackItems(client, player, extractedSlots, extractedSlots.size() - 1);
             } else {
@@ -246,7 +226,7 @@ public class BundleBrowserScreen extends Screen {
             client.execute(() -> {
                 int emptySlot = findEmptyPlayerSlot(player);
                 if (emptySlot == -1) {
-                    // No room — put cursor item back in bundle and abort
+                    // No room: put cursor item back in bundle and abort
                     BundleBrowserClient.LOGGER.debug("No empty inventory slot for extraction, aborting");
                     client.gameMode.handleContainerInput(syncId, bundleSlotId, 0, ContainerInput.PICKUP, player);
                     client.execute(() -> abortExtraction(client, player, extractedSlots));
@@ -257,7 +237,6 @@ public class BundleBrowserScreen extends Screen {
                 client.gameMode.handleContainerInput(syncId, emptySlot, 0, ContainerInput.PICKUP, player);
                 extractedSlots.add(emptySlot);
 
-                // Continue extracting
                 extractItemsAndKeepLast(client, player, remaining - 1, extractedSlots);
             });
         });
@@ -322,7 +301,7 @@ public class BundleBrowserScreen extends Screen {
         client.execute(() -> {
             ItemStack bundle = screenHandler.getSlot(bundleSlotId).getItem();
             if (BundleHelper.isBundle(bundle) && !BundleHelper.isEmpty(bundle)) {
-                client.setScreen(new BundleBrowserScreen(bundle, bundleSlotId, parentScreen));
+                client.setScreenAndShow(new BundleBrowserScreen(bundle, bundleSlotId, parentScreen));
             }
         });
     }
@@ -338,11 +317,9 @@ public class BundleBrowserScreen extends Screen {
 
         final int count = contents.size();
 
-        // Go to parent screen and extract all items there
         client.execute(() -> {
-            client.setScreen(parentScreen);
+            client.setScreenAndShow(parentScreen);
 
-            // Extract all items with slight delays
             extractNextItem(client, player, count);
         });
     }
@@ -358,7 +335,7 @@ public class BundleBrowserScreen extends Screen {
             client.execute(() -> {
                 int emptySlot = findEmptyPlayerSlot(player);
                 if (emptySlot == -1) {
-                    // No room — put cursor item back in bundle and stop
+                    // No room: put cursor item back in bundle and stop
                     BundleBrowserClient.LOGGER.debug("Inventory full during Empty All, stopping");
                     client.gameMode.handleContainerInput(syncId, bundleSlotId, 0, ContainerInput.PICKUP, player);
                     return;
@@ -367,7 +344,6 @@ public class BundleBrowserScreen extends Screen {
                 // Place cursor item in empty slot
                 client.gameMode.handleContainerInput(syncId, emptySlot, 0, ContainerInput.PICKUP, player);
 
-                // Continue with next item
                 if (remaining > 1) {
                     extractNextItem(client, player, remaining - 1);
                 }
@@ -377,9 +353,8 @@ public class BundleBrowserScreen extends Screen {
 
     @Override
     public void onClose() {
-        // Return to parent inventory screen
         if (minecraft != null) {
-            minecraft.setScreen(parentScreen);
+            minecraft.setScreenAndShow(parentScreen);
         }
     }
 
@@ -390,8 +365,7 @@ public class BundleBrowserScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent input) {
-        // Allow ESC or inventory key to close
-        if (input.key() == GLFW.GLFW_KEY_ESCAPE || (minecraft != null && minecraft.options.keyInventory.matches(input))) {
+        if (input.key() == InputConstants.KEY_ESCAPE || (minecraft != null && minecraft.options.keyInventory.matches(input))) {
             onClose();
             return true;
         }
