@@ -43,6 +43,9 @@ public class BundleBrowserScreen extends Screen {
 
     private BundleSlotWidget hoveredSlot;
 
+    // Log render failures once per session, not once per frame
+    private static boolean renderFailureLogged = false;
+
     public BundleBrowserScreen(ItemStack bundleStack, int bundleSlotId, AbstractContainerScreen<?> parentScreen) {
         super(Component.translatable("bundlebrowser.screen.title"));
         this.bundleSlotId = bundleSlotId;
@@ -59,7 +62,20 @@ public class BundleBrowserScreen extends Screen {
         slotWidgets.clear();
         hoveredSlot = null;
 
-        ItemStack currentBundle = screenHandler.getSlot(bundleSlotId).getItem();
+        // Menu shape can change under us (resize re-runs init, server can swap menus);
+        // an unexpected shape must close the screen, never crash the client
+        ItemStack currentBundle;
+        try {
+            if (bundleSlotId < 0 || bundleSlotId >= screenHandler.slots.size()) {
+                onClose();
+                return;
+            }
+            currentBundle = screenHandler.getSlot(bundleSlotId).getItem();
+        } catch (Exception e) {
+            BundleBrowserClient.LOGGER.error("Bundle browser could not read its slot, closing", e);
+            onClose();
+            return;
+        }
         if (!BundleHelper.isBundle(currentBundle) || BundleHelper.isEmpty(currentBundle)) {
             onClose();
             return;
@@ -123,33 +139,42 @@ public class BundleBrowserScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        // Don't call renderBackground here: it causes double blur
-        context.fill(0, 0, width, height, 0xC0101010);
+        // Rendering must never take the client down: log once, close, let the parent recover
+        try {
+            // Don't call renderBackground here: it causes double blur
+            context.fill(0, 0, width, height, 0xC0101010);
 
-        drawContainerBackground(context);
+            drawContainerBackground(context);
 
-        context.text(
-                font,
-                title,
-                containerX + 8,
-                containerY + TITLE_Y,
-                0x404040,
-                false
-        );
+            context.text(
+                    font,
+                    title,
+                    containerX + 8,
+                    containerY + TITLE_Y,
+                    0x404040,
+                    false
+            );
 
-        hoveredSlot = null;
-        for (BundleSlotWidget slot : slotWidgets) {
-            if (slot.isHovered()) {
-                hoveredSlot = slot;
-                break;
+            hoveredSlot = null;
+            for (BundleSlotWidget slot : slotWidgets) {
+                if (slot.isHovered()) {
+                    hoveredSlot = slot;
+                    break;
+                }
             }
-        }
 
-        super.extractRenderState(context, mouseX, mouseY, delta);
+            super.extractRenderState(context, mouseX, mouseY, delta);
 
-        // Render tooltip last (on top of everything)
-        if (hoveredSlot != null) {
-            hoveredSlot.renderTooltip(context, mouseX, mouseY);
+            // Render tooltip last (on top of everything)
+            if (hoveredSlot != null) {
+                hoveredSlot.renderTooltip(context, mouseX, mouseY);
+            }
+        } catch (Exception e) {
+            if (!renderFailureLogged) {
+                renderFailureLogged = true;
+                BundleBrowserClient.LOGGER.error("Bundle browser failed to render, closing", e);
+            }
+            onClose();
         }
     }
 
@@ -174,6 +199,24 @@ public class BundleBrowserScreen extends Screen {
         // Inset for slot area
         context.fill(slotsX, slotsY, slotsX + slotsWidth, slotsY + slotsHeight, 0xFF373737);
         context.fill(slotsX + 1, slotsY + 1, slotsX + slotsWidth - 1, slotsY + slotsHeight - 1, 0xFF8B8B8B);
+    }
+
+    /**
+     * The extraction chain spans many frames via nested client.execute calls, so the player
+     * can change screens mid-chain. Checking containerId is not enough to detect that: the
+     * creative screen's ItemPickerMenu reuses containerId 0, the same id as InventoryMenu,
+     * so vanilla's mismatched-container guard passes and our clicks would land on a
+     * client-side fake menu our slot indices were never computed against. Only menu
+     * identity is a safe check.
+     */
+    private boolean menuStillActive(Minecraft client) {
+        LocalPlayer player = client.player;
+        if (player == null || client.gameMode == null) return false;
+        if (player.containerMenu != screenHandler) {
+            BundleBrowserClient.LOGGER.debug("Container changed mid-operation, abandoning bundle operation");
+            return false;
+        }
+        return true;
     }
 
     /** Matches on the slot's backing inventory, so it works across all container types. */
@@ -210,20 +253,24 @@ public class BundleBrowserScreen extends Screen {
             int remaining, List<Integer> extractedSlots) {
         if (remaining <= 0) {
             if (extractedSlots.size() > 1) {
-                putBackItems(client, player, extractedSlots, extractedSlots.size() - 1);
+                // Keep the last extracted item (the target); return the rest, first extracted first
+                putBackItems(client, player,
+                        List.copyOf(extractedSlots.subList(0, extractedSlots.size() - 1)), 0);
             } else {
                 reopenBrowser(client);
             }
             return;
         }
 
-        if (client.player == null || client.gameMode == null) return;
+        if (!menuStillActive(client)) return;
 
         client.execute(() -> {
+            if (!menuStillActive(client)) return;
             // Right-click to extract from bundle
             client.gameMode.handleContainerInput(syncId, bundleSlotId, 1, ContainerInput.PICKUP, player);
 
             client.execute(() -> {
+                if (!menuStillActive(client)) return;
                 int emptySlot = findEmptyPlayerSlot(player);
                 if (emptySlot == -1) {
                     // No room: put cursor item back in bundle and abort
@@ -252,15 +299,17 @@ public class BundleBrowserScreen extends Screen {
             return;
         }
 
-        if (client.player == null || client.gameMode == null) return;
+        if (!menuStillActive(client)) return;
 
         int slotToReturn = extractedSlots.remove(extractedSlots.size() - 1);
 
         client.execute(() -> {
+            if (!menuStillActive(client)) return;
             // Pick up item from where we stashed it
             client.gameMode.handleContainerInput(syncId, slotToReturn, 0, ContainerInput.PICKUP, player);
 
             client.execute(() -> {
+                if (!menuStillActive(client)) return;
                 // Put it back into the bundle
                 client.gameMode.handleContainerInput(syncId, bundleSlotId, 0, ContainerInput.PICKUP, player);
 
@@ -269,29 +318,31 @@ public class BundleBrowserScreen extends Screen {
         });
     }
 
+    /** Returns slotsToPutBack[nextIndex..] to the bundle in order, then reopens the browser. */
     private void putBackItems(Minecraft client, LocalPlayer player,
-            List<Integer> extractedSlots, int countToPutBack) {
-        if (countToPutBack <= 0) {
+            List<Integer> slotsToPutBack, int nextIndex) {
+        // Counting up against the list size cannot index below zero, whatever the caller passes
+        if (nextIndex >= slotsToPutBack.size()) {
             reopenBrowser(client);
             return;
         }
 
-        if (client.player == null || client.gameMode == null) return;
+        if (!menuStillActive(client)) return;
 
-        // Put back items in order (first extracted goes back first)
-        int slotIndex = extractedSlots.size() - countToPutBack - 1;
-        int slotToPutBack = extractedSlots.get(slotIndex);
+        int slotToPutBack = slotsToPutBack.get(nextIndex);
 
         client.execute(() -> {
+            if (!menuStillActive(client)) return;
             // Pick up item
             client.gameMode.handleContainerInput(syncId, slotToPutBack, 0, ContainerInput.PICKUP, player);
 
             client.execute(() -> {
+                if (!menuStillActive(client)) return;
                 // Put into bundle (left-click on bundle with item on cursor)
                 client.gameMode.handleContainerInput(syncId, bundleSlotId, 0, ContainerInput.PICKUP, player);
 
                 client.execute(() -> {
-                    putBackItems(client, player, extractedSlots, countToPutBack - 1);
+                    putBackItems(client, player, slotsToPutBack, nextIndex + 1);
                 });
             });
         });
@@ -299,6 +350,8 @@ public class BundleBrowserScreen extends Screen {
 
     private void reopenBrowser(Minecraft client) {
         client.execute(() -> {
+            // Never stomp a screen the user navigated to mid-chain (e.g. the creative screen)
+            if (client.gui.screen() != parentScreen || !menuStillActive(client)) return;
             ItemStack bundle = screenHandler.getSlot(bundleSlotId).getItem();
             if (BundleHelper.isBundle(bundle) && !BundleHelper.isEmpty(bundle)) {
                 client.setScreenAndShow(new BundleBrowserScreen(bundle, bundleSlotId, parentScreen));
@@ -326,13 +379,15 @@ public class BundleBrowserScreen extends Screen {
 
     private void extractNextItem(Minecraft client, LocalPlayer player, int remaining) {
         if (remaining <= 0) return;
-        if (client.player == null || client.gameMode == null) return;
+        if (!menuStillActive(client)) return;
 
         client.execute(() -> {
+            if (!menuStillActive(client)) return;
             // Right-click to extract
             client.gameMode.handleContainerInput(syncId, bundleSlotId, 1, ContainerInput.PICKUP, player);
 
             client.execute(() -> {
+                if (!menuStillActive(client)) return;
                 int emptySlot = findEmptyPlayerSlot(player);
                 if (emptySlot == -1) {
                     // No room: put cursor item back in bundle and stop
