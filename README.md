@@ -21,7 +21,7 @@ Bundle Browser lets you **right-click any bundle in your inventory** to open a c
 
 ## Installation
 
-Install alongside its declared dependencies (see `fabric.mod.json`), then place the mod jar in your `mods` folder.
+Drop the jar in your client's `mods` folder alongside its declared dependencies (see `fabric.mod.json`). No server-side installation needed. Version targets live in `gradle.properties` (Minecraft, loader, Fabric API) and `fabric.mod.json` (Java).
 
 ## Usage
 
@@ -29,10 +29,6 @@ Install alongside its declared dependencies (see `fabric.mod.json`), then place 
 2. Right-click on a non-empty bundle
 3. Click items to extract them, or use "Empty All"
 4. Press ESC or your inventory key to close
-
-## Requirements
-
-Targets the Minecraft, Fabric Loader, and Java versions declared in this mod's `gradle.properties`; check there for the exact currently-supported version.
 
 ## Building from Source
 
@@ -44,4 +40,4 @@ The built JAR will be in `build/libs/`.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT, see [LICENSE](LICENSE).
