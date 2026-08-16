@@ -46,7 +46,10 @@ public class BundleSlotWidget extends AbstractWidget {
 
     @Override
     public void onClick(MouseButtonEvent click, boolean doubled) {
-        if (click.button() == 0 && onClick != null && !itemStack.isEmpty()) {
+        // Mouse button numbering is InputConstants', not GLFW's: left is 1, not 0.
+        // Ask the widget itself rather than naming a number; AbstractWidget's
+        // isValidClickButton is the same gate mouseClicked already applied.
+        if (isValidClickButton(click.buttonInfo()) && onClick != null && !itemStack.isEmpty()) {
             Minecraft.getInstance().getSoundManager().play(
                     SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F)
             );

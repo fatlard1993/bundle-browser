@@ -42,7 +42,10 @@ public abstract class HandledScreenMixin {
 
     @Unique
     private void bundlebrowser$tryOpenBrowser(Slot slot, int button, ContainerInput actionType, CallbackInfo ci) {
-        // button 1 = right-click
+        // NOT an InputConstants mouse button. AbstractContainerScreen funnels clicks
+        // through getContainerClickButton, which maps MOUSE_BUTTON_LEFT (1) to 0 and
+        // MOUSE_BUTTON_RIGHT (3) to 1, so what arrives here is the container-protocol
+        // button: 0 = left, 1 = right. 1 is correct; do not "fix" it to MOUSE_BUTTON_RIGHT.
         if (button == 1 && actionType == ContainerInput.PICKUP && slot != null && slot.hasItem() && slot.index >= 0) {
             // Creative screen menus are client-side fakes (ItemPickerMenu, containerId 0):
             // slot indices and clicks don't map to a server container, so never activate there

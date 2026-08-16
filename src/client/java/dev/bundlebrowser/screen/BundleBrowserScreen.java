@@ -151,7 +151,9 @@ public class BundleBrowserScreen extends Screen {
                     title,
                     containerX + 8,
                     containerY + TITLE_Y,
-                    0x404040,
+                    // ARGB: GuiGraphicsExtractor.text early-returns when ARGB.alpha() is 0,
+                    // so a bare 0xRRGGBB draws nothing at all
+                    0xFF404040,
                     false
             );
 
