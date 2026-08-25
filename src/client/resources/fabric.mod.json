@@ -24,9 +24,9 @@
     "bundlebrowser.client.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.16.0",
-    "minecraft": ">=26.2",
+    "fabricloader": ">=${loaderVersion}",
+    "minecraft": "${minecraftDependency}",
     "java": ">=25",
-    "fabric-api": "*"
+    "fabric-api": "${fabricApiVersion}"
   }
 }
