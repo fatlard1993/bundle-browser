@@ -1,0 +1,18 @@
+{
+	"schemaVersion": 1,
+	"id": "bundle-browser-gametest",
+	"version": "1.0.0",
+	"name": "Bundle Browser smoke test",
+	"description": "Loads the mod, joins a world, and fails if anything on the way threw.",
+	"license": "MIT",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-client-gametest": [
+			"dev.bundlebrowser.gametest.SmokeTest"
+		]
+	},
+	"depends": {
+		"bundlebrowser": "*",
+		"fabric-client-gametest-api-v1": "*"
+	}
+}
