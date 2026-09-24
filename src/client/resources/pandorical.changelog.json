@@ -7,10 +7,12 @@
       "A lighter icon, and a build for the current game."
     ],
     "1.1.2": [
-      "An extraction no longer carries on after the bundle is closed, which the creative item picker could set off, and clicks and text colours were put right for the current game."
+      "An extraction no longer carries on after the bundle is closed.",
+      "Clicks and text colours were put right for the current game."
     ],
     "1.0.0": [
-      "Any bundle in your inventory opens as a chest-like grid. Click an item to pull it out, or empty the whole bundle at once.",
+      "Any bundle in your inventory opens as a chest-like grid.",
+      "Click an item to pull it out, or empty the whole bundle at once.",
       "Client side only, so it works on any server."
     ]
   }
