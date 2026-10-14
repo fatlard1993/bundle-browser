@@ -3,6 +3,9 @@
     "Right-click a bundle and it opens as a grid, so you can take the one item you want out of the middle instead of unpacking everything sitting on top of it."
   ],
   "versions": {
+    "1.1.5": [
+      "Release notes rewritten to read plainly; nothing in play changes."
+    ],
     "1.1.4": [
       "A lighter icon, and a build for the current game."
     ],
