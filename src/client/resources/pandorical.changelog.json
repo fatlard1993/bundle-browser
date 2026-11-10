@@ -3,6 +3,9 @@
     "Right-click a bundle and it opens as a grid, so you can take the one item you want out of the middle instead of unpacking everything sitting on top of it."
   ],
   "versions": {
+    "1.1.7": [
+      "Drop changelog notes for changes nothing in the game shows."
+    ],
     "1.1.2": [
       "An extraction no longer carries on after the bundle is closed.",
       "Clicks and text colours were put right for the current game."
